@@ -1,0 +1,43 @@
+# generated files
+Rplots.pdf
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.svg
+# data folders
+data/
+# large R / genomics objects
+*.rds
+*.RDS
+*.rda
+*.RData
+*.Rdata
+*.qs
+*.h5
+*.h5ad
+*.idx
+*.loom
+*.mtx
+*.bam
+*.bai
+*.cram
+*.sam
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.csv
+*.tar
+*.sh
+*.tgz
+# temp/logs
+*.log
+*.out
+*.err
+tmp/
+cache/
+# editor/session files
+.Rhistory
+.Rproj.user/
+.DS_Store
+EOF
