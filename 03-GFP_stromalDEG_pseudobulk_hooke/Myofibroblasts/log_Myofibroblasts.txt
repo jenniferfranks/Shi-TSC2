@@ -1,0 +1,12 @@
+[2026-04-22 22:14:31] ==================================================== 
+[2026-04-22 22:14:31] Starting GFP pseudobulk analysis for cell type:  Myofibroblasts 
+[2026-04-22 22:14:31] Run ID:  20260422_220411 
+[2026-04-22 22:14:31] Run started at:  2026-04-22 22:04:11 
+[2026-04-22 22:14:31] Cells in GFP-:  7 
+[2026-04-22 22:14:31] Cells in GFP+:  47 
+[2026-04-22 22:14:31] Sample by GFP table: 
+          
+           GFP- GFP+
+  TSC2_WS3    0   33
+  TSC2_WS4    7   14
+[2026-04-22 22:14:31] ERROR:  Too few cells in one or both GFP groups 

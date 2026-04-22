@@ -1,0 +1,8 @@
+[2026-04-22 00:07:37] ====================================================
+[2026-04-22 00:07:37] Starting cell type: Myofibroblasts
+[2026-04-22 00:07:37] Cells in GFP-: 7
+[2026-04-22 00:07:37] Cells in GFP+: 47
+[2026-04-22 00:07:37] Samples in GFP-: 1
+[2026-04-22 00:07:37] Samples in GFP+: 2
+[2026-04-22 00:07:37] Skipping: too few cells
+[2026-04-22 00:07:37] ERROR: no function to return from, jumping to top level

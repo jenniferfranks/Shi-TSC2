@@ -1,0 +1,27 @@
+[2026-04-22 22:56:57] ==================================================== 
+[2026-04-22 22:56:57] Starting GFP pseudobulk analysis for cell type:  Alveolar Fibroblasts 
+[2026-04-22 22:56:57] Run ID:  20260422_225158 
+[2026-04-22 22:56:57] Run started at:  2026-04-22 22:51:58 
+[2026-04-22 22:56:58] Cells in GFP-:  75 
+[2026-04-22 22:56:58] Cells in GFP+:  382 
+[2026-04-22 22:56:58] Sample by GFP table: 
+          
+           GFP- GFP+
+  TSC2_WS3    3  163
+  TSC2_WS4   72  219
+[2026-04-22 22:57:21] Genes retained after filtering:  10293 
+[2026-04-22 22:57:21] Pseudobulk colData columns: 
+[2026-04-22 22:57:21] pseudobulk_id, cell_group, num_cells_in_group, sample, Size_Factor, scrublet_score, num_genes_expressed, perc_mitochondrial_umis, GFP_transgene_expr, cluster, global_cluster, sample_id.factor, barcode, scrublet_call, model, cell, broad_annotation, subset_cluster_names, group_id 
+[2026-04-22 22:57:21] Using pseudobulk sample column:  sample 
+[2026-04-22 22:57:21] Using pseudobulk group column:  cell_group 
+[2026-04-22 22:57:21] Pseudobulk sample by GFP table: 
+          
+           GFP- GFP+
+  TSC2_WS3    1    1
+  TSC2_WS4    1    1
+[2026-04-22 22:58:57] Genes q==0:  267 
+[2026-04-22 22:58:57] Genes q<0.05:  1196 
+[2026-04-22 22:59:26] Significant genes saved:  267 
+[2026-04-22 22:59:26] Significant GFP coefficient rows saved:  267 
+[2026-04-22 22:59:26] Running g:Profiler on  267  significant genes 
+[2026-04-22 22:59:29] g:Profiler results saved:  351  terms 

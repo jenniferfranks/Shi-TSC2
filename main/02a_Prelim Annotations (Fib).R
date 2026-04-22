@@ -166,21 +166,21 @@ pData(cds)$broad_annotation <- as.character(pData(cds)$global_cluster)
 
 pData(cds)$broad_annotation <- dplyr::recode(
   pData(cds)$broad_annotation,
-  "1" = "Immune",
-  "2" = "T cells",
+  "1" = "B cells (Cd79a+)",
+  "2" = "T cells (Cd3d+)",
   "3" = "Endothelial",
   "4" = "Alveolar Macrophage",
-  "5" = "Epithelial",
+  "5" = "AT1",
   "6" = "NK cells",
-  "7" = "Macrophage",
-  "8" = "Macrophage",
+  "7" = "Interstitial Macrophage",
+  "8" = "Interstitial Macrophage",
   "9" = "Immune",
-  "10" = "Fibroblast",
+  "10" = "Fibroblast (Col1a1+",
   "11" = "DCs",
   "12" = "Fibroblast",
-  "13" = "Fibroblast",
+  "13" = "Fibroblast (Acta2+)",
   "14" = "Macrophage",
-  "15" = "Epithelial",
+  "15" = "Ciliated Epithelial",
   "16" = "Doublets?",
   "17" = "Fibroblast",
   "18" = "Macrophage",
@@ -247,13 +247,15 @@ stromal_markers <- c(
   # activated / myofibroblast-like
   "Cthrc1", "Postn", "Acta2", "Tagln", "Tnc", "Thy1",
   # pericyte / smc
-  "Pdgfrb", "Rgs5", "Cspg4",  "Myh11", "Mcam", "Des",
+  "Pdgfrb", "Rgs5", "Cspg4",  "Myh11", "Mcam", "Des", "Cox4i2",
   # mesothelial
   "Upk3b", "Msln", "Krt19", "Krt8",
   # gfp
   "GFP_transgene",
   # proliferation
-  "Mki67", "Top2a"
+  "Mki67", "Top2a",
+  #other checks
+  "Cd68", "Ptprc", "Epcam", "Pecam1", "Cdh5"
 )
 
 plot_genes_by_group(
@@ -274,19 +276,68 @@ pData(cds.stromal)$subset_cluster_names <- dplyr::recode(
   pData(cds.stromal)$subset_cluster_names,
   "1" = "Alveolar Fibroblasts",
   "2" = "Pericytes/SMCs",
-  "3" = "Runx1+ cells, maybe doublets",
+  "3" = "Hematopoietic doublets",
   "4" = "Pericytes/SMCs",
   "5" = "Adventitial Fibroblasts",
   "6" = "Myofibroblasts",
-  "7" = "Proliferating Fibroblasts",
+  "7" = "Endothelial doublets",
   "8" = "Alveolar Fibroblasts"
 )
 
+cds.stromal <- cds.stromal[, which(pData(cds.stromal)$subset_cluster_names != "Hematopoietic doublets" &
+  pData(cds.stromal)$subset_cluster_names != "Endothelial doublets")]
+
+cds.stromal <- cds.stromal %>%
+  preprocess_cds(num_dim = 30) %>%
+  reduce_dimension() %>%
+  cluster_cells(k = 20, random_seed = 3752)
+
+plot_cells(cds.stromal, color_cells_by = "cluster", label_cell_groups = FALSE, cell_size = 1.25) + 
+  theme_void()
+plot_cells(cds.stromal, color_cells_by = "GFP_status", label_cell_groups = FALSE)
+plot_cells(cds.stromal, color_cells_by = "GFP_transgene_expr", label_cell_groups = FALSE)
+if ("sample" %in% colnames(pData(cds.stromal))) {
+  plot_cells(cds.stromal, color_cells_by = "sample", label_cell_groups = FALSE, cell_size = 1.25)
+}
+
+pData(cds.stromal)$subset_cluster_names <- as.character(clusters(cds.stromal))
+pData(cds.stromal)$subset_cluster_names <- dplyr::recode(
+  pData(cds.stromal)$subset_cluster_names,
+  "1" = "Alveolar Fibroblasts",
+  "2" = "SMCs",
+  "3" = "Epithelial doublets",
+  "4" = "Pericytes",
+  "5" = "Adventitial Fibroblasts",
+  "6" = "Myofibroblasts"
+)
+
+cds.stromal <- cds.stromal[, which(pData(cds.stromal)$subset_cluster_names != "Epithelial doublets")]
+
+
+pData(cds.stromal)$subset_cluster_names <- as.character(clusters(cds.stromal))
+pData(cds.stromal)$subset_cluster_names <- dplyr::recode(
+  pData(cds.stromal)$subset_cluster_names,
+  "1" = "Alveolar Fibroblasts",
+  "2" = "SMCs",
+  "3" = "Pericytes",
+  "4" = "Adventitial Fibroblasts",
+  "5" = "Myofibroblasts"
+)
+
 plot_cells(cds.stromal, color_cells_by = "subset_cluster_names",
- label_cell_groups = FALSE, cell_size=1.25)
+ label_cell_groups = F, cell_size=1.25, group_label_size=8) + 
+   theme(text=element_text(size=18))
+
+save_monocle_objects(cds.stromal, directory_path = "data/cds/Shi_TSC2_stromal-cells/")
+# --------------------------------------------------------------------------------------
 
 plot_cells(cds.stromal, color_cells_by = "GFP_status",
- label_cell_groups = FALSE, cell_size=1.25)
+ label_cell_groups = FALSE, cell_size=1.25)+ 
+   theme(text=element_text(size=18))
+
+plot_cells(cds.stromal, color_cells_by = "GFP_transgene_expr",
+ label_cell_groups = FALSE, cell_size=1.25)+ 
+   theme(text=element_text(size=18))
 # ------------------------------------------------------------------------------
 # GFP summary within first-pass stromal states
 # ------------------------------------------------------------------------------
@@ -310,73 +361,128 @@ stromal_gfp_summary <- as.data.frame(pData(cds.stromal)) %>%
 
 print(stromal_gfp_summary, n = 100)
 
-plot_genes_by_group(cds.stromal, group_cells_by = "subset_cluster_names", 
-  markers=c("GFP_transgene_expr", "Pdgfrb", "Pdgfra", "Npnt", "Cthrc1", "Pi16",
-          "Acta2", "Dcn", "Col1a1", "Runx1","Ms4a2", "Mki67", "Top2a"), 
-          ordering_type="none") 
-
+plot_genes_by_group(
+  cds.stromal,
+  group_cells_by = "subset_cluster_names",
+  markers = c(
+    "GFP_transgene",
+    "Pdgfra", "Npnt",       # alveolar fibroblasts
+    "Pi16", "Dcn",          # adventitial fibroblasts
+    "Pdgfrb", "Cspg4", "Rgs5",  # pericytes
+    "Acta2", "Tagln", "Myh11",  # SMCs
+    "Col1a1", "Cthrc1", "Fn1"   # myofibroblasts
+  ),
+  ordering_type = "none"
+) + theme(text = element_text(size = 18))
 
 
 
 
 library(dplyr)
+stromal_df <- as.data.frame(pData(cds.stromal)) %>%
+  filter(!is.na(subset_cluster_names)) %>%
+  mutate(
+    GFP_status = ifelse(GFP_transgene_expr > 0.1, "GFP+", "GFP-")
+  )
+stromal_comp <- stromal_df %>%
+  group_by(sample_id, subset_cluster_names) %>%
+  summarise(n = dplyr::n(), .groups = "drop") %>%
+  group_by(sample_id) %>%
+  mutate(
+    total_cells = sum(n),
+    prop = n / total_cells,
+    percent = 100 * prop
+  )
 
-fib_df <- as.data.frame(pData(cds.stromal)) %>%
-  filter(!is.na(subset_cluster_names))
+ggplot(stromal_comp, aes(x = subset_cluster_names, y = percent, fill = sample_id)) +
+  geom_col(position = "dodge") +
+  theme_classic() +
+  labs(
+    x = "Stromal subtype",
+    y = "Percent of stromal cells",
+    title = "Relative stromal composition by sample"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    text = element_text(size = 16)
+  )
 
-# summarize per sample per cell type
-fib_sample_summary <- fib_df %>%
+stromal_gfp_frac <- stromal_df %>%
   group_by(sample_id, subset_cluster_names) %>%
   summarise(
-    mean_GFP = mean(GFP_transgene_expr, na.rm = TRUE),
-    median_GFP = median(GFP_transgene_expr, na.rm = TRUE),
-    frac_GFP_pos = mean(GFP_transgene_expr > 0.1, na.rm = TRUE),  # your threshold
-    n_cells = n(),
+    n_cells = dplyr::n(),
+    n_GFP_pos = sum(GFP_transgene_expr > 0.1, na.rm = TRUE),
+    frac_GFP_pos = mean(GFP_transgene_expr > 0.1, na.rm = TRUE),
+    percent_GFP_pos = 100 * frac_GFP_pos,
     .groups = "drop"
   )
 
-library(lme4)
-
-# mean expression model
-m1 <- lmer(mean_GFP ~ subset_cluster_names + (1 | sample_id), data = fib_sample_summary)
-summary(m1)
-
-library(lmerTest)
-summary(m1)
-
-fib_sample_summary %>%
-  group_by(subset_cluster_names) %>%
-  summarise(
-    p_value = tryCatch(
-      wilcox.test(mean_GFP ~ sample_id)$p.value,
-      error = function(e) NA
-    )
+ggplot(stromal_gfp_frac, aes(x = subset_cluster_names, y = percent_GFP_pos, fill = sample_id)) +
+  geom_col(position = "dodge") +
+  theme_classic() +
+  labs(
+    x = "Stromal subtype",
+    y = "Percent GFP+ cells",
+    title = "Fraction of GFP+ cells within each stromal subtype"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    text = element_text(size = 16)
   )
 
-library(emmeans)
 
-emmeans(m1, pairwise ~ subset_cluster_names)
+stromal_gfp_expr <- stromal_df %>%
+  group_by(sample_id, subset_cluster_names) %>%
+  summarise(
+    n_cells = dplyr::n(),
+    mean_GFP = mean(GFP_transgene_expr, na.rm = TRUE),
+    median_GFP = median(GFP_transgene_expr, na.rm = TRUE),
+    .groups = "drop"
+  )
 
-library(ggplot2)
-
-ggplot(fib_sample_summary, aes(x = subset_cluster_names, y = mean_GFP)) +
-  geom_point(aes(color = sample_id), size = 3, position = position_dodge(width = 0.3)) +
-  stat_summary(fun = mean, geom = "point", size = 4, color = "black") +
-  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
+ggplot(stromal_gfp_expr, aes(x = subset_cluster_names, y = mean_GFP, fill = sample_id)) +
+  geom_col(position = "dodge") +
   theme_classic() +
   labs(
-    x = "Fibroblast subtype",
+    x = "Stromal subtype",
     y = "Mean GFP expression",
-    title = "GFP expression across fibroblast states (sample-level)"
+    title = "Mean GFP expression within each stromal subtype"
   ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    text = element_text(size = 16)
+  )
 
-ggplot(fib_sample_summary, aes(x = subset_cluster_names, y = frac_GFP_pos)) +
-  geom_point(aes(color = sample_id), size = 3, position = position_dodge(width = 0.3)) +
-  stat_summary(fun = mean, geom = "point", size = 4, color = "black") +
+stromal_gfp_stack <- stromal_df %>%
+  group_by(sample_id, subset_cluster_names, GFP_status) %>%
+  summarise(n = dplyr::n(), .groups = "drop") %>%
+  group_by(sample_id, subset_cluster_names) %>%
+  mutate(
+    total = sum(n),
+    percent = 100 * n / total
+  )
+
+ggplot(stromal_gfp_stack, aes(x = subset_cluster_names, y = percent, fill = GFP_status)) +
+  geom_col(position = "fill") +
+  facet_wrap(~sample_id) +
+  scale_y_continuous(labels = scales::percent) +
   theme_classic() +
   labs(
-    y = "Fraction GFP+ cells (>0.1)",
-    x = "Fibroblast subtype"
+    x = "Stromal subtype",
+    y = "Relative fraction",
+    title = "GFP+ and GFP- composition within each stromal subtype"
   ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    text = element_text(size = 16)
+  )
+table(pData(cds.stromal)$sample)
+pData(cds.stromal)
+
+
+# DEGs between GFP+ and GFP- within each stromal subtype
+deg_results <- list()
+for (subtype in unique(pData(cds.stromal)$subset_cluster_names)) {
+  cat("Running DE analysis for subtype:", subtype, "\n")
+  
+}

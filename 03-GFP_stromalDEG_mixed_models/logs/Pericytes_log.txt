@@ -1,0 +1,8 @@
+[2026-04-22 00:07:37] ====================================================
+[2026-04-22 00:07:37] Starting cell type: Pericytes
+[2026-04-22 00:07:37] Cells in GFP-: 14
+[2026-04-22 00:07:37] Cells in GFP+: 104
+[2026-04-22 00:07:37] Samples in GFP-: 2
+[2026-04-22 00:07:37] Samples in GFP+: 2
+[2026-04-22 00:07:37] Skipping: too few cells
+[2026-04-22 00:07:37] ERROR: no function to return from, jumping to top level
