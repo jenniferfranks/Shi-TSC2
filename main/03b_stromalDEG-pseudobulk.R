@@ -16,6 +16,7 @@ suppressPackageStartupMessages({
   library(viridis)
   library(hooke)
   library(gprofiler2)
+  library(grid)
 })
 
 # ------------------------------------------------------------------------------
@@ -71,11 +72,11 @@ flatten_list_columns <- function(df) {
   df
 }
 
-plot_volcano_directional <- function(
+plot_volcano_p_with_q <- function(
   coef_table,
   term_keep = "GFP_for_modelGFP+",
-  q_cutoff_1 = 0.05,
-  q_cutoff_2 = 0.01,
+  q_cutoff_1 = 0.01,
+  q_cutoff_2 = 0.001,
   label_n_each_side = 8,
   title = NULL
 ) {
@@ -83,17 +84,18 @@ plot_volcano_directional <- function(
     as.data.frame(stringsAsFactors = FALSE) %>%
     mutate(
       estimate = as.numeric(estimate),
+      p_value = as.numeric(p_value),
       q_value = as.numeric(q_value)
     ) %>%
-    filter(!is.na(estimate), !is.na(q_value)) %>%
+    filter(!is.na(estimate), !is.na(p_value), !is.na(q_value)) %>%
     filter(term == term_keep) %>%
     mutate(
-      neglog10_q = -log10(q_value),
+      neglog10_p = -log10(pmax(p_value, 1e-300)),
       direction_class = case_when(
-        estimate > 0 & q_value < q_cutoff_2 ~ "Higher GFP+ (q<0.01)",
-        estimate > 0 & q_value < q_cutoff_1 ~ "Higher GFP+ (q<0.05)",
-        estimate < 0 & q_value < q_cutoff_2 ~ "Higher GFP- (q<0.01)",
-        estimate < 0 & q_value < q_cutoff_1 ~ "Higher GFP- (q<0.05)",
+        estimate > 0 & q_value < q_cutoff_2 ~ "Higher GFP+ (q<0.001)",
+        estimate > 0 & q_value < q_cutoff_1 ~ "Higher GFP+ (q<0.01)",
+        estimate < 0 & q_value < q_cutoff_2 ~ "Higher GFP- (q<0.001)",
+        estimate < 0 & q_value < q_cutoff_1 ~ "Higher GFP- (q<0.01)",
         TRUE ~ "NS"
       )
     )
@@ -102,17 +104,17 @@ plot_volcano_directional <- function(
     return(
       ggplot() +
         theme_void() +
-        ggtitle(paste0(title, "\nNo coefficient rows found for ", term_keep))
+        ggtitle(paste0(title, "\nNo data"))
     )
   }
 
   df$direction_class <- factor(
     df$direction_class,
     levels = c(
+      "Higher GFP+ (q<0.001)",
       "Higher GFP+ (q<0.01)",
-      "Higher GFP+ (q<0.05)",
+      "Higher GFP- (q<0.001)",
       "Higher GFP- (q<0.01)",
-      "Higher GFP- (q<0.05)",
       "NS"
     )
   )
@@ -134,18 +136,16 @@ plot_volcano_directional <- function(
   xmax <- max(abs(df$estimate), na.rm = TRUE) * 1.05
   if (!is.finite(xmax) || xmax <= 0) xmax <- 1
 
-  ggplot(df, aes(x = estimate, y = neglog10_q)) +
+  ggplot(df, aes(x = estimate, y = neglog10_p)) +
     geom_point(aes(color = direction_class), alpha = 0.8, size = 2) +
-    geom_hline(yintercept = -log10(q_cutoff_1), linetype = "dashed", linewidth = 0.4) +
-    geom_hline(yintercept = -log10(q_cutoff_2), linetype = "dotted", linewidth = 0.4) +
-    geom_vline(xintercept = 0, linetype = "solid", linewidth = 0.4) +
+    geom_vline(xintercept = 0, linewidth = 0.4) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.4) +
+    geom_hline(yintercept = -log10(0.01), linetype = "dotted", linewidth = 0.4) +
     geom_text_repel(
       data = label_df,
       aes(label = gene_short_name),
       size = 3,
-      max.overlaps = Inf,
-      box.padding = 0.3,
-      point.padding = 0.2
+      max.overlaps = Inf
     ) +
     scale_x_continuous(
       limits = c(-xmax, xmax),
@@ -153,22 +153,21 @@ plot_volcano_directional <- function(
     ) +
     scale_color_manual(
       values = c(
-        "Higher GFP+ (q<0.01)" = "#1B7837",
-        "Higher GFP+ (q<0.05)" = "#A6DBA0",
-        "Higher GFP- (q<0.01)" = "#B2182B",
-        "Higher GFP- (q<0.05)" = "#F4A6A6",
+        "Higher GFP+ (q<0.001)" = "#1B7837",
+        "Higher GFP+ (q<0.01)" = "#A6DBA0",
+        "Higher GFP- (q<0.001)" = "#B2182B",
+        "Higher GFP- (q<0.01)" = "#F4A6A6",
         "NS" = "grey75"
       )
     ) +
     labs(
       title = title,
-      x = "Model coefficient (left = higher in GFP-, right = higher in GFP+)",
-      y = expression(-log[10](q_value)),
+      x = "Model coefficient",
+      y = expression(-log[10](p_value)),
       color = NULL
     ) +
     theme_classic(base_size = 12) +
     theme(
-      plot.title = element_text(face = "bold"),
       legend.position = "top",
       legend.text = element_text(size = 9),
       legend.key.width = unit(1.2, "lines"),
@@ -187,6 +186,7 @@ sample_col <- "sample_id"
 min_cells_total_per_group <- 20
 min_cells_for_gene_fraction <- 0.05
 min_pseudobulk_groups <- 4
+sig_q_cutoff <- 0.01
 
 # ------------------------------------------------------------------------------
 # load data
@@ -266,8 +266,7 @@ for (i in seq_along(cell.types)) {
     n_samples_gfp_pos = NA_integer_,
     n_pseudobulk_columns = NA_integer_,
     n_genes_tested = NA_integer_,
-    n_sig_q0 = NA_integer_,
-    n_sig_q05 = NA_integer_,
+    n_sig_q01 = NA_integer_,
     status = "started",
     notes = NA_character_,
     stringsAsFactors = FALSE
@@ -321,7 +320,6 @@ for (i in seq_along(cell.types)) {
     pData(cds.subset)$sample_id.factor <- factor(as.character(pData(cds.subset)[[sample_col]]))
     pData(cds.subset)$GFP_status <- factor(as.character(pData(cds.subset)[[group_col]]), levels = c("GFP-", "GFP+"))
 
-    # pseudobulk in hooke style
     ccs <- new_cell_count_set(
       cds.subset,
       sample_group = sample_col,
@@ -367,7 +365,6 @@ for (i in seq_along(cell.types)) {
       stop("Too few pseudobulk columns")
     }
 
-    # full and reduced models
     pseudo_fit <- fit_models(
       pseudobulk_cds,
       model_formula_str = "~ sample_for_model + GFP_for_model",
@@ -385,13 +382,12 @@ for (i in seq_along(cell.types)) {
     )
 
     compared <- compare_models(pseudo_fit, pseudo_fit_red) %>%
-      dplyr::select(gene_short_name, q_value)
+      dplyr::select(gene_short_name, q_value) %>%
+      distinct(gene_short_name, .keep_all = TRUE)
 
-    status_row$n_sig_q0 <- sum(compared$q_value == 0, na.rm = TRUE)
-    status_row$n_sig_q05 <- sum(compared$q_value < 0.05, na.rm = TRUE)
+    status_row$n_sig_q01 <- sum(compared$q_value < sig_q_cutoff, na.rm = TRUE)
 
-    append_log(log_file, "Genes q==0: ", status_row$n_sig_q0)
-    append_log(log_file, "Genes q<0.05: ", status_row$n_sig_q05)
+    append_log(log_file, "Genes q<0.01: ", status_row$n_sig_q01)
 
     write_status_table(
       compared,
@@ -416,11 +412,9 @@ for (i in seq_along(cell.types)) {
       file.path(result_dir, "coefficient_table.csv")
     )
 
-    # keep ONLY the GFP coefficient row from the fitted model
     coef_tab_gfp <- coef_tab %>%
       filter(term == "GFP_for_modelGFP+")
 
-    # attach gene-level compare_models q-value
     coef_tab_gfp <- coef_tab_gfp %>%
       left_join(
         compared %>% rename(model_compare_q_value = q_value),
@@ -434,35 +428,31 @@ for (i in seq_along(cell.types)) {
 
     # --------------------------------------------------------------------------
     # significant genes + g:Profiler
-    # significance comes from compare_models(full vs reduced), which tests
-    # addition of the GFP term. This avoids intercept/sample-term contamination.
     # --------------------------------------------------------------------------
     sig_genes <- compared %>%
       filter(!is.na(q_value)) %>%
-      filter(q_value == 0) %>%
+      filter(q_value < sig_q_cutoff) %>%
       distinct(gene_short_name, .keep_all = TRUE) %>%
       arrange(q_value)
 
     write_status_table(
       sig_genes,
-      file.path(result_dir, "significant_genes_q_lt_0.csv")
+      file.path(result_dir, "significant_genes_q_lt_0.01.csv")
     )
 
     append_log(log_file, "Significant genes saved: ", nrow(sig_genes))
 
-    # save ONLY GFP coefficient rows for significant genes
     sig_gfp_coef <- coef_tab_gfp %>%
       filter(gene_short_name %in% sig_genes$gene_short_name) %>%
       arrange(model_compare_q_value, p_value, desc(abs(as.numeric(estimate))))
 
     write_status_table(
       sig_gfp_coef,
-      file.path(result_dir, "significant_genes_GFP_term_only_q_lt_0.csv")
+      file.path(result_dir, "significant_genes_GFP_q_lt_0.01.csv")
     )
 
     append_log(log_file, "Significant GFP coefficient rows saved: ", nrow(sig_gfp_coef))
 
-    # run g:Profiler on significant genes from compare_models
     if (nrow(sig_genes) > 0) {
 
       gp_query <- sig_genes$gene_short_name
@@ -487,7 +477,7 @@ for (i in seq_along(cell.types)) {
 
         write_status_table(
           gp_df,
-          file.path(result_dir, "gprofiler_significant_genes_q_lt_0.05.csv")
+          file.path(result_dir, "gprofiler_significant_genes_q_lt_0.01.csv")
         )
 
         append_log(log_file, "g:Profiler results saved: ", nrow(gp_df), " terms")
@@ -496,15 +486,14 @@ for (i in seq_along(cell.types)) {
       }
 
     } else {
-      append_log(log_file, "No significant genes at q = 0, skipping g:Profiler")
+      append_log(log_file, "No significant genes at q < 0.01, skipping g:Profiler")
     }
 
-    # volcano plot
-    p_volcano <- plot_volcano_directional(
+    p_volcano <- plot_volcano_p_with_q(
       coef_table = coef_tab,
       term_keep = "GFP_for_modelGFP+",
-      q_cutoff_1 = 0,
-      #q_cutoff_2 = 0.01,
+      q_cutoff_1 = 0.01,
+      q_cutoff_2 = 0.001,
       label_n_each_side = 8,
       title = paste0(cell.type, ": pseudobulk GFP+ vs GFP-")
     )
@@ -647,6 +636,6 @@ plot_gene_paired_celltype <- function(
 # example
 plot_gene_paired_celltype(
   cds = cds,
-  gene = "Pcsk6",
+  gene = "Igfbp5",
   celltype = "Adventitial Fibroblasts"
 )

@@ -1,23 +1,26 @@
-[2026-04-22 22:14:31] ==================================================== 
-[2026-04-22 22:14:31] Starting GFP pseudobulk analysis for cell type:  SMCs 
-[2026-04-22 22:14:31] Run ID:  20260422_220411 
-[2026-04-22 22:14:31] Run started at:  2026-04-22 22:04:11 
-[2026-04-22 22:14:31] Cells in GFP-:  35 
-[2026-04-22 22:14:31] Cells in GFP+:  202 
-[2026-04-22 22:14:31] Sample by GFP table: 
+[2026-04-23 20:45:03] ==================================================== 
+[2026-04-23 20:45:03] Starting GFP pseudobulk analysis for cell type:  SMCs 
+[2026-04-23 20:45:03] Run ID:  20260423_203221 
+[2026-04-23 20:45:03] Run started at:  2026-04-23 20:32:21 
+[2026-04-23 20:45:03] Cells in GFP-:  35 
+[2026-04-23 20:45:03] Cells in GFP+:  202 
+[2026-04-23 20:45:03] Sample by GFP table: 
           
            GFP- GFP+
   TSC2_WS3    3  123
   TSC2_WS4   32   79
-[2026-04-22 22:14:47] Genes retained after filtering:  10046 
-[2026-04-22 22:14:47] Pseudobulk colData columns: 
-[2026-04-22 22:14:47] pseudobulk_id, cell_group, num_cells_in_group, sample, Size_Factor, scrublet_score, num_genes_expressed, perc_mitochondrial_umis, GFP_transgene_expr, cluster, global_cluster, sample_id.factor, barcode, scrublet_call, model, cell, broad_annotation, subset_cluster_names, group_id 
-[2026-04-22 22:14:47] Using pseudobulk sample column:  sample 
-[2026-04-22 22:14:47] Using pseudobulk group column:  cell_group 
-[2026-04-22 22:14:47] Pseudobulk sample by GFP table: 
+[2026-04-23 20:45:04] Genes retained after filtering:  10046 
+[2026-04-23 20:45:04] Pseudobulk colData columns: 
+[2026-04-23 20:45:04] pseudobulk_id, cell_group, num_cells_in_group, sample, Size_Factor, scrublet_score, num_genes_expressed, perc_mitochondrial_umis, GFP_transgene_expr, cluster, global_cluster, sample_id.factor, barcode, scrublet_call, model, cell, broad_annotation, subset_cluster_names, group_id 
+[2026-04-23 20:45:04] Using pseudobulk sample column:  sample 
+[2026-04-23 20:45:04] Using pseudobulk group column:  cell_group 
+[2026-04-23 20:45:04] Pseudobulk sample by GFP table: 
           
            GFP- GFP+
   TSC2_WS3    1    1
   TSC2_WS4    1    1
-[2026-04-22 22:16:28] Genes q==0:  221 
-[2026-04-22 22:16:28] Genes q<0.05:  2210 
+[2026-04-23 20:46:36] Genes q<0.01:  2181 
+[2026-04-23 20:47:02] Significant genes saved:  2181 
+[2026-04-23 20:47:02] Significant GFP coefficient rows saved:  2181 
+[2026-04-23 20:47:02] Running g:Profiler on  2181  significant genes 
+[2026-04-23 20:47:08] g:Profiler results saved:  1541  terms 
