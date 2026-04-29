@@ -639,3 +639,4 @@ plot_gene_paired_celltype(
   gene = "Igfbp5",
   celltype = "Adventitial Fibroblasts"
 )
+
